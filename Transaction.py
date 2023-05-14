@@ -5,10 +5,11 @@ import copy
 
 class Transaction():
 
-    def __init__(self, senderPublicKey, receiverPublicKey, amount, type):
+    def __init__(self, senderPublicKey, receiverPublicKey, prompt, type):
         self.senderPublicKey = senderPublicKey
         self.receiverPublicKey = receiverPublicKey
-        self.amount = amount
+        self.prompt = prompt
+        self.result = ''
         self.type = type
         self.id = (uuid.uuid1()).hex
         self.timestamp = time.time()
@@ -30,3 +31,6 @@ class Transaction():
             return True
         else:
             return False
+    
+    def update_result(self, result):
+        self.result = result

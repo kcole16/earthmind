@@ -2,6 +2,7 @@ from Block import Block
 from BlockchainUtils import BlockchainUtils
 from AccountModel import AccountModel
 from ProofOfStake import ProofOfStake
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 
 class Blockchain():
@@ -10,11 +11,17 @@ class Blockchain():
         self.blocks = [Block.genesis()]
         self.accountModel = AccountModel()
         self.pos = ProofOfStake()
+        self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+        self.model = GPT2LMHeadModel.from_pretrained("gpt2")
+
+    def run_prompt(self, prompt):
+        inputs = self.tokenizer.encode(prompt, return_tensors='pt')
+        outputs = self.model.generate(inputs, max_length=150, do_sample=False, temperature=0)
+        return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
 
     def addBlock(self, block):
-        self.executeTransactions(block.transactions) 
-        if self.blocks[-1].blockCount < block.blockCount:
-            self.blocks.append(block)
+        self.executeTransactions(block.transactions)
+        self.blocks.append(block)
 
     def toJson(self):
         data = {}
@@ -72,9 +79,12 @@ class Blockchain():
         else:
             sender = transaction.senderPublicKey
             receiver = transaction.receiverPublicKey
-            amount = transaction.amount
-            self.accountModel.updateBalance(sender, -amount)
-            self.accountModel.updateBalance(receiver, amount)
+            prompt = transaction.prompt
+            result = self.run_prompt(prompt)
+            print(result)
+            transaction.update_result(result)
+            # self.accountModel.updateBalance(sender, -amount)
+            # self.accountModel.updateBalance(receiver, amount)
 
     def nextForger(self):
         lastBlockHash = BlockchainUtils.hash(
